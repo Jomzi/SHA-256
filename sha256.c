@@ -79,7 +79,7 @@ void sha256(){
   };
 
   // The current message block.
-  uint32_t M[16];
+  uint32_t M[16] =  {0, 0, 0, 0, 0, 0, 0, 0};
   
 
   // For looping.
