@@ -16,7 +16,7 @@ uint32_t sig1(uint32_t x);
 
 // See Section 3.2 for defintions.
 uint32_t rotr(uint32_t n, uint32_t x);
-uint32_t shr(uint32_t n, uint32_tx);
+uint32_t shr(uint32_t n, uint32_t x);
 
 // See Section 4.1.2 for definitions.
 uint32_t SIG0(uint32_t x);
@@ -24,7 +24,7 @@ uint32_t SIG1(uint32_t x);
 
 // See Section 4.1.2 for definitions.
 uint32_t Ch(uint32_t x, uint32_t y, uint32_t z);
-uint32_t Maj(uint32_t x, uint32_t x, uint32_t y, uint32_t z);
+uint32_t Maj(uint32_t x, uint32_t y, uint32_t z);
 
 
 int main(int argc, char *argv[]){
@@ -83,15 +83,19 @@ void sha256(){
   
 
   // For looping.
-  int t;
+  int i,t;
+  
+  // Loop through message blocks as per page 22.
+  for(i = 0; i < 1; i++){
+  
   
   // From page 22, W[t] = M[t] for 0 <= t <= 15.
-  for(t = o; t < 16; t++)
+  for(t = 0; t < 16; t++)
     W[t] = M[t];
 
   // From page 22, W[t] = ...
   for (t = 16; t < 64; t++)
-    w[t] =  sig1(W[t-2]) + W[t-7] + sig0(W[t-15]) + W[t-16];
+    W[t] =  sig1(W[t-2]) + W[t-7] + sig0(W[t-15]) + W[t-16];
   
   // Initialis a, b, c, .., h as per Step 2, Page 22.
   a = H[0]; b = H[1]; c = H[2]; d = H[3];
@@ -99,7 +103,7 @@ void sha256(){
   
   // Step 3.
   for (t = 0; t < 64; t++){
-    T1 = h + SIG1(e) +Ch(e, f, g) + K[t] +  W[t];
+    T1 = h + SIG1(e) + Ch(e, f, g) + K[t] +  W[t];
     T2 = SIG0(a) + Maj(a, b, c);
     h = g;
     g = f;
@@ -109,19 +113,20 @@ void sha256(){
     c = b; 
     b = a;  
     a = T1 + T2;  
-}
+  }
 
- // Step 4.
- H[0] = a + H[0];
- H[1] = b + H[1];
- H[2] = c + H[2];
- H[3] = d + H[3];
- H[4] = e + H[4];
- H[5] = f + H[5];
- H[6] = g + H[6];
- H[7] = h + H[7];
- 
- printf("%x %x %x %x %x %x %x %x\n", H[0], H[1], H[2], H[3], H[4], H[5], H[6], H[7]);
+  // Step 4.
+  H[0] = a + H[0];
+  H[1] = b + H[1];
+  H[2] = c + H[2];
+  H[3] = d + H[3];
+  H[4] = e + H[4];
+  H[5] = f + H[5];
+  H[6] = g + H[6];
+  H[7] = h + H[7];
+
+  }
+  printf("%x %x %x %x %x %x %x %x\n", H[0], H[1], H[2], H[3], H[4], H[5], H[6], H[7]);
 } 
 
 
@@ -155,10 +160,10 @@ uint32_t SIG1(uint32_t x){
 }
 
 // See Section 4.1.2 for definitions.
-uint32_t Ch(uint32_t x, uint_t y, uint32_t z){
-  return ((x & y) ^ ((!x) & z);	
+uint32_t Ch(uint32_t x, uint32_t y, uint32_t z){
+  return ((x & y) ^ ((!x) & z));	
 }
 
 uint32_t Maj(uint32_t x, uint32_t y, uint32_t z){
-  return ((x & y) ^ (x & z);	
+  return ((x & y) ^ (x & z));	
 }
