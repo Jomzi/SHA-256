@@ -42,17 +42,20 @@ int nextmsgblock(FILE *f, union msgblock *M, enum status *S, int *nobits);
 
 // Start of the show.
 int main(int argc, char *argv[]){
-
+  // Open the file given as first command line argument.
   FILE* f;
-  f = fopen(argv[1], "r");  
+  f = fopen(argv[1], "r"); 
+  // Should do error checking here.
   
+   
+  // Close the file.
   sha256(f);
 
   return 0;
 }  
 
 
-void sha256(){
+void sha256(FILE *f){
    
   // The current message block
   union msgblock M;
@@ -116,7 +119,7 @@ void sha256(){
   
   // From page 22, W[t] = M[t] for 0 <= t <= 15.
   for(t = 0; t < 16; t++)
-    W[t] = M[t];
+    W[t] = M.t[t];
 
   // From page 22, W[t] = ...
   for (t = 16; t < 64; t++)
@@ -194,22 +197,70 @@ uint32_t Maj(uint32_t x, uint32_t y, uint32_t z){
 }
 
 int nextmsgblock(FILE *f, union msgblock *M, enum status *S, int *nobits);
-  union msgblock M;
 
-  uint64_t nobits = 0;
-
+  // The number of bytes we get from fread.
   uint64_t nobytes;
 
-  enum status S = READ;
-
+  // For looping.
   int i;
+  
+  //If we finish all the message blocks, than S should be FINISH.
+  if (*S == FINISH)
+    return 0;
 
-  while (S == READ) {
-    nobytes = fread(M.e, 1, 64, f);
-    printf("Read %2llu bytes\n", nobytes);
-    nobits = nobits + (nobytes * 8);
-    if (nobytes < 56){
-      printf("I've found a block with less than 55 bytes!\n");
-      M.e[nobytes] = 0x80;
-      while (nobytes < 56){
-        nobytes = nobytes + 1;
+  // Otherwise, check if we need another block full of padding.
+  if (*S == PAD0 || *S == PAD1) {
+     // Set the first 56 bytes to all zero bits.	  
+     for (i = 0; i < 56; i++)
+       M->e[i] = 0x00;
+       // Set the last 64bits to the number of bits in the file (should be big-endian).
+     M->s[7] = nobits;
+     // Tell S we are finished.
+     *S = FINISH;
+   }
+   // If S was PAD1, then set the first bit of M to one.
+   if (S == PAD1)
+     M.e[0] = 0x80;
+   // Keep the loop in sha256 going for one more iteration. 
+   return 1;     
+  }
+
+   // If we get down here, we haven't finished the file (S == READ).
+   nobytes = fread(M->e, 1, 64, f);
+      
+  // Keep track of the number of bytes we've read.
+  * nobits = *nobits + (nobytes * 8);
+  // If we read less than 56 bytes, we can put all the padding in this message block.
+  if (nobytes < 56){
+    // Add the one bit, as per the standard.	  
+    M->e[nobytes] = 0x80;
+    // Add zero bits until the last 64 bits.
+    while (nobytes < 56){
+      nobytes = nobytes + 1;
+      M->e[nobytes] = 0x00;	
+    }
+    // Append the file size in bits as a (should be big endian) unsigned 64 bit int.
+    M.s[7] = nobits;
+    // Tell S we are finished.
+    *S = FINISH;
+  // Otherwise, check if we can put some padding into this message block.  
+  } else if (nobytes < 64){
+    // Tell S we need another message block, with padding but no one bit.    
+    *S = PAD0;
+    // Put the one bit into the current block.
+    M->e[nobytes] = 0x80;
+    // Pad the rest of the block with zero bits.
+    while (nobytes < 64){
+      nobytes = nobytes + 1;
+      M.e[nobytes] = 0x00;
+    }
+  // Otherwise, check if we're just at the end of the file.    
+  } else if (feof(f)) {
+      // Tell S we need another message block with all the padding.	  
+      *S = PAD1;
+          
+  }
+
+  // If we get this far, then return l so that this function is called again. 
+  return 1;  
+}	
