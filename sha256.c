@@ -88,7 +88,6 @@ void sha256(FILE *msgf){
     0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2 
   };
 
-
   // Message schedule (Section 6.2).
   uint32_t W[64];
   // Working varibles (Section 6.2).
@@ -145,7 +144,7 @@ void sha256(FILE *msgf){
   
   }
 
-  printf("%x %x %x %x %x %x %x %x\n", H[0], H[1], H[2], H[3], H[4], H[5], H[6], H[7]);
+  printf("%08x %08x %08x %08x %08x %08x %08x %08x\n", H[0], H[1], H[2], H[3], H[4], H[5], H[6], H[7]);
 } 
 
 
