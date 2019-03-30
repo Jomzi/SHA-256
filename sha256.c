@@ -18,7 +18,6 @@ union msgblock {
 enum status {READ, PAD0, PAD1, FINISH};
 
 
-
 // See Section 4.1.2 for definitions.
 uint32_t sig0(uint32_t x);
 uint32_t sig1(uint32_t x);
@@ -38,24 +37,27 @@ uint32_t Maj(uint32_t x, uint32_t y, uint32_t z);
 void sha256(FILE *f);
 
 // Retrieves the next message block.
-int nextmsgblock(FILE *f, union msgblock *M, enum status *S, int *nobits);
+int nextmsgblock(FILE *f, union msgblock *M, enum status *S, uint64_t *nobits);
 
 // Start of the show.
 int main(int argc, char *argv[]){
+
   // Open the file given as first command line argument.
-  FILE* f;
-  f = fopen(argv[1], "r"); 
+  FILE* msgf;
+  msgf = fopen(argv[1], "r"); 
   // Should do error checking here.
-  
-   
+     
+  // Run the secure hash algorithm on the file.
+  sha256(msgf);
+
   // Close the file.
-  sha256(f);
+  fclose(msgf);
 
   return 0;
 }  
 
 
-void sha256(FILE *f){
+void sha256(FILE *msgf){
    
   // The current message block
   union msgblock M;
@@ -103,13 +105,12 @@ void sha256(FILE *f){
     , 0x1f83d9ab, 0x5be0cd19
   };
   
-
   // For looping.
   int i,t;
 
-  while (nextmsgblock(f, M, S, nobits)){
-  
-  
+  // Loop through message blocks as per page 22.
+  while (nextmsgblock(msgf, &M, &S, &nobits)){
+    
     // From page 22, W[t] = M[t] for 0 <= t <= 15.
     for(t = 0; t < 16; t++)
       W[t] = M.t[t];
@@ -141,10 +142,10 @@ void sha256(FILE *f){
     H[2] = c + H[2]; H[3] = d + H[3];
     H[4] = e + H[4]; H[5] = f + H[5];
     H[6] = g + H[6]; H[7] = h + H[7];
+  
+  }
 
-   }
-
-   printf("%x %x %x %x %x %x %x %x\n", H[0], H[1], H[2], H[3], H[4], H[5], H[6], H[7]);
+  printf("%x %x %x %x %x %x %x %x\n", H[0], H[1], H[2], H[3], H[4], H[5], H[6], H[7]);
 } 
 
 
@@ -157,7 +158,6 @@ uint32_t shr(uint32_t n, uint32_t x){
   return(x >> n);
 }
 
- 
 uint32_t sig0(uint32_t x){
   // See Sections 3.2 and 4.1.2 for definitions.	
   return(rotr(7, x) ^ rotr(18, x) ^ shr(3, x));
@@ -183,10 +183,10 @@ uint32_t Ch(uint32_t x, uint32_t y, uint32_t z){
 }
 
 uint32_t Maj(uint32_t x, uint32_t y, uint32_t z){
-  return ((x & y) ^ (x & z));	
+  return ((x & y) ^ (x & z) ^ (y & z));	
 }
 
-int nextmsgblock(FILE *f, union msgblock *M, enum status *S, int *nobits);
+int nextmsgblock(FILE *msgf, union msgblock *M, enum status *S, uint64_t *nobits) {
 
   // The number of bytes we get from fread.
   uint64_t nobytes;
@@ -194,32 +194,31 @@ int nextmsgblock(FILE *f, union msgblock *M, enum status *S, int *nobits);
   // For looping.
   int i;
   
-  //If we finish all the message blocks, than S should be FINISH.
+  // If we finish all the message blocks, than S should be FINISH.
   if (*S == FINISH)
     return 0;
 
   // Otherwise, check if we need another block full of padding.
   if (*S == PAD0 || *S == PAD1) {
-     // Set the first 56 bytes to all zero bits.	  
-     for (i = 0; i < 56; i++)
-       M->e[i] = 0x00;
-       // Set the last 64bits to the number of bits in the file (should be big-endian).
-     M->s[7] = nobits;
-     // Tell S we are finished.
-     *S = FINISH;
-   }
-   // If S was PAD1, then set the first bit of M to one.
-   if (S == PAD1)
-     M.e[0] = 0x80;
+    // Set the first 56 bytes to all zero bits.	  
+    for (i = 0; i < 56; i++)
+      M->e[i] = 0x00;
+    // Set the last 64bits to the number of bits in the file (should be big-endian).
+    M->s[7] = *nobits;
+    // Tell S we are finished.
+    *S = FINISH;
+    // If S was PAD1, then set the first bit of M to one.
+   if (*S == PAD1)
+     M->e[0] = 0x80;
    // Keep the loop in sha256 going for one more iteration. 
    return 1;     
   }
 
-   // If we get down here, we haven't finished the file (S == READ).
-   nobytes = fread(M->e, 1, 64, f);
+  // If we get down here, we haven't finished the file (S == READ).
+  nobytes = fread(M->e, 1, 64, msgf);
       
   // Keep track of the number of bytes we've read.
-  * nobits = *nobits + (nobytes * 8);
+  *nobits = *nobits + (nobytes * 8);
   // If we read less than 56 bytes, we can put all the padding in this message block.
   if (nobytes < 56){
     // Add the one bit, as per the standard.	  
@@ -230,7 +229,7 @@ int nextmsgblock(FILE *f, union msgblock *M, enum status *S, int *nobits);
       M->e[nobytes] = 0x00;	
     }
     // Append the file size in bits as a (should be big endian) unsigned 64 bit int.
-    M.s[7] = nobits;
+    M->s[7] = *nobits;
     // Tell S we are finished.
     *S = FINISH;
   // Otherwise, check if we can put some padding into this message block.  
@@ -242,13 +241,12 @@ int nextmsgblock(FILE *f, union msgblock *M, enum status *S, int *nobits);
     // Pad the rest of the block with zero bits.
     while (nobytes < 64){
       nobytes = nobytes + 1;
-      M.e[nobytes] = 0x00;
+      M->e[nobytes] = 0x00;
     }
   // Otherwise, check if we're just at the end of the file.    
-  } else if (feof(f)) {
+  } else if (feof(msgf)) {
       // Tell S we need another message block with all the padding.	  
       *S = PAD1;
-          
   }
 
   // If we get this far, then return l so that this function is called again. 
