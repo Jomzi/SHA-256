@@ -27,7 +27,7 @@ To run this project you can either download a C compiler or set up a vitual mach
 
 2. You will need to install GGC, if it's not already there. To install GGC type the follow command: sudo apt-get install build-essential
 
-3. To compile the program use: gcc SHA256.c -o SHA256
+3. To compile the program use: gcc -o sha256 sha256.c
 
 4. Then excute it by using: 
 
@@ -35,3 +35,4 @@ To run this project you can either download a C compiler or set up a vitual mach
 
 Research
 ---
+https://www.youtube.com/watch?v=DMtFhACPnTY
