@@ -13,6 +13,10 @@ This Repository contains work from my 4th year theory of algorithms module for c
 
 What is the SHA256 Hashing Algorithm?
 ---
+SHA256 stands for Secure Hash Algorithm 256-bit and it’s used for cryptographic security.
+
+Cryptographic hash algorithms produce irreversible and unique hashes. The larger the number of possible hashes, the smaller the chance that two values will create the same hash.
+
 A hash is as a mathematical computer process that takes information and turns it into letters and numbers of a certain length. Hashing is used to make storing and finding information quicker because hashes are usually shorter and easier to find. Hashes also make information unreadable and so the original data can become confidential.
 
 For example, “I like bitcoin” can be hashed and will equal: ad3e58f21b94f32dcadca6b71df4c31a18179f38011551a17a80d0ff065d22c5
@@ -44,8 +48,7 @@ Research
 <ul><li><a href="https://www.youtube.com/watch?v=DMtFhACPnTY" rel="nofollow">Good video on how SHA256 works.</a></li>
 <li><a href="https://decryptionary.com/dictionary/secure-hash-algorithm-256/" rel="nofollow">decryptionary.com</a></li>
 <li><a href="https://github.com/B-Con/crypto-algorithms/blob/master/sha256.c" rel="nofollow">Helped me with the macros.</a></li>
-<li><a href="https://passwordsgenerator.net/sha256-hash-generator/" rel="nofollow">Sha256 online generator..</a></li>
-   
+<li><a href="https://passwordsgenerator.net/sha256-hash-generator/" rel="nofollow">Sha256 online generator.</a></li>  
 </ul>
 
 
