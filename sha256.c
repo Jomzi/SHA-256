@@ -17,6 +17,7 @@ union msgblock {
 // A flag for where we are in reading the file.
 enum status {READ, PAD0, PAD1, FINISH};
 
+#define byteSwap32(x) (((x
 
 // See Section 4.1.2 for definitions.
 uint32_t sig0(uint32_t x);
@@ -46,10 +47,15 @@ int main(int argc, char *argv[]){
   FILE* msgf;
   msgf = fopen(argv[1], "r"); 
   // Should do error checking here.
-     
+  if(msgf == NULL){
+     printf("Could not open file!\n");
+  }
+  else{
+	  
+ 
   // Run the secure hash algorithm on the file.
   sha256(msgf);
-
+  }
   // Close the file.
   fclose(msgf);
 
@@ -86,6 +92,7 @@ void sha256(FILE *msgf){
     0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
     0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208,
     0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2 
+
   };
 
   // Message schedule (Section 6.2).
@@ -244,7 +251,7 @@ int nextmsgblock(FILE *msgf, union msgblock *M, enum status *S, uint64_t *nobits
     }
   // Otherwise, check if we're just at the end of the file.    
   } else if (feof(msgf)) {
-      // Tell S we need another message block with all the padding.	  
+      // Tell S we need another message block with all the padding.	 
       *S = PAD1;
   }
 
