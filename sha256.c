@@ -6,7 +6,7 @@
 #include <stdio.h> 
 // For using fixed bit lenght integer.
 #include <stdint.h>
-
+#include "sha256.h"
 // Represents a message block.
 union msgblock {
   uint8_t  e[64];
@@ -17,7 +17,18 @@ union msgblock {
 // A flag for where we are in reading the file.
 enum status {READ, PAD0, PAD1, FINISH};
 
-#define byteSwap32(x) (((x
+//Macros
+#define rotl(x, n)((((x << n)) | ((x >> (32 - n))))
+#define rotr(x, n)( ((x >> n)) | ((x << (32 - n))))
+
+#define Ch(x, y, z) (((x) & (y)) ^ (~(x) & (z)))
+#define Maj(x, y, z)(((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))
+#define sig0(x)(rotr(x,2) ^ rotr(x,13) ^ rotr(x,22))
+#define sig1(x)(rotr(x,6) ^ rotr(x,11) ^ rotr(x,25))
+#define SIG0(x)(rotr(x,7) ^ rotr(x,18) ^ ((x) >> 3))
+#define SIG1(x)(rotr(x,17) ^ rotr(x,19) ^ ((x) >> 10))
+
+
 
 // See Section 4.1.2 for definitions.
 uint32_t sig0(uint32_t x);
