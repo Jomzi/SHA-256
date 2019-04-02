@@ -6,7 +6,7 @@
 #include <stdio.h> 
 // For using fixed bit lenght integer.
 #include <stdint.h>
-#include "sha256.h"
+//#include "sha256.h"
 // Represents a message block.
 union msgblock {
   uint8_t  e[64];
